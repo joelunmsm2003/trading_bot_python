@@ -1,5 +1,4 @@
 numpy
-ta-lib
 Flask
 requests
 simplejson

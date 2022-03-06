@@ -1,0 +1,9 @@
+numpy
+ta-lib
+Flask
+requests
+simplejson
+pandas
+matplotlib
+yfinance
+mplfinance

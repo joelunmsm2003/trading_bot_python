@@ -11,11 +11,13 @@ import yfinance as yf
 import numpy as np
 import soporte as levels
 import datetime
+import numpy
+formato3="{:<20} {:<20} {:<20} {:<20} {:<20}"
 # to make the visualization better by only taking the last 100 rows of data
 
-cryptos=['LUNA1-USD','BTC-USD','MATIC-USD','SOL-USD','DOT-USD','LINK-USD','ATOM-USD','SAND-USD','ETH-USD','AVAX-USD','ADA-USD','EWT-USD','FIL-USD','GALA-USD','ENJ-USD']
+cryptos=['LUNA1-USD','BTC-USD','MATIC-USD','SOL-USD','DOT-USD','LINK-USD','ATOM-USD','SAND-USD','ETH-USD','AVAX-USD','ADA-USD','EWT-USD','FIL-USD','GALA-USD','ENJ-USD','CAKE-USD']
 
-
+#cryptos=['BTC-USD']
 def check_even(number):
 
 
@@ -31,15 +33,24 @@ def traeCryptos():
 
   print(HEADER+str(datetime.datetime.now())+ENDC)
 
-
+  json_string=[]
 
   for c in cryptos:
 
     msft = yf.Ticker(c)
+
+    estado=''
+
+    print(c)
     
     niveles=levels.lista_levels(c)
 
-    df = msft.history(start="2020-01-01", end='2022-03-28')
+    df = msft.history(start="2020-01-01", end='2022-07-28')
+
+    #EMA = talib.MA(df['Close'],timeperiod=20,matype=1)
+     
+    #print("Exponential Moving Average",EMA)
+
 
 
     # parameter setup
@@ -101,40 +112,85 @@ def traeCryptos():
 
     segunda=colors[-1]
 
+    print('ADX '+str(round(df['ADX'][-1],2)))
+
+    if round(df['ADX'][-1],2)<23:
+
+      adx_texto='No hay fuerza'
+
+    elif round(df['ADX'][-1],2)>30:
+
+      adx_texto='Mucha Fuerza'
+
+    else:
+
+      adx_texto=''
+
+    adx_texto=''
+
+
     if df['ADX'][-1]<df['ADX'][-2] and (color=='red' or color=='maroon'):
 
-        print(OKGREEN+c +' COMPRA  '+ENDC)
+      print(OKGREEN+c +' COMPRA '+adx_texto+ENDC)
 
+      estado=' Compre'+adx_texto
 
+    elif df['ADX'][-1]<df['ADX'][-2] and (color=='green' or color=='lime'):
 
-    if df['ADX'][-1]<df['ADX'][-2] and (color=='green' or color=='lime'):
+      print(FAIL+c +' VENTA  '+adx_texto+ENDC)
 
-      print(FAIL+c +' VENTA  '+ENDC)
+      estado=estado+' Venda'+adx_texto
 
-    if df['ADX'][-1]>df['ADX'][-2] and (color=='green' or color=='lime'):
+    elif df['ADX'][-1]>df['ADX'][-2] and (color=='green' or color=='lime'):
 
+      print(OKGREEN+c +' COMPRA  '+adx_texto+' '+ENDC)
 
-      print(OKGREEN+c +' COMPRA  '+ENDC)
+      estado=estado+' Compre'+adx_texto
 
+    else:
 
+      print(OKBLUE+c+' NADA'+ENDC)
 
-    result = list(map(lambda x: (x,abs(x-df['Close'][-1])*100/x), niveles))
+    result = list(map(lambda x: (x,abs(x-df['Close'][-1])*100/x,(x-df['Close'][-1])*100/x), niveles))
 
     precios=list(filter(check_even, result))
 
+    try:
+
+      soportes=min(precios, key=lambda item: item[1])
+
+    except:
+
+      pass
+
     data = len(precios)
 
+    tipo=''
+
+    porcentaje_cercania_soporte=1
+
     if data>0:
-      
-      
-      if df['Close'][-1]>df['Close'][-2]:
 
-        print(WARNING+c+' RESISTENCIA '+str(round(precios[0][0],3))+ENDC)
+      if soportes[1]<porcentaje_cercania_soporte:
 
-      else:
+        #print(df['Close'][ind],df['Close'][-1],(df['Close'][ind]-df['Close'][-1])*100/df['Close'][ind])
 
-        print(WARNING+c+' SOPORTE '+str(round(precios[0][0],3))+ENDC)
+        print(WARNING+formato3.format('NIVEL ',str(df[df['Close']==df['Close'][ind]].index.values[0])[0:10],str(round(df['Close'][ind],3)),str(round(soportes[2],3))+'%',str(round(soportes[0],3))+ENDC))
 
+        #estado=estado+' esta Cerca a un nivel'
+
+    print(OKBLUE+'------------------------------------------------------------------------'+ENDC)
+
+
+    json_string.append({
+       "crypto":c,
+       "estado":estado
+      })
+  with open('json_data.json', 'w') as outfile:
+
+
+    outfile.write(json.dumps(json_string))
+    
 
 
 if __name__ == '__main__':

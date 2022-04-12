@@ -10,7 +10,7 @@ import numpy as np
 msft = yf.Ticker("BTC-USD")
 print(msft.info)
 
-df = msft.history(start="2021-01-01", end='2022-02-26')
+df = msft.history(start="2021-01-01", end='2022-02-26', interval="4h")
 
 
 df['MA'] = talib.SMA(df['Close'],20)
